@@ -18,6 +18,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['namespace' => 'App\Http\Controllers\Api'], function () {
-    Route::resource('products', 'ProductController', ['except' => 'edit']);
+Route::middleware('auth:api')->namespace('App\Http\Controllers\Api')->group(function() {
+    Route::resource('products', 'ProductController', ['except' => 'edit', 'create']);
 });
+
+//Route::group(['namespace' => 'App\Http\Controllers\Api'], function () {
+//    Route::resource('products', 'ProductController', ['except' => 'edit']);
+//});

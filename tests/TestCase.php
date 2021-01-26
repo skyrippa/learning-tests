@@ -3,16 +3,18 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use App\Http\Resources\Product as ProductResource;
 
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
 
-    public function create(string $model, array $attributes = [])
+    public function create(string $model, string $resource, array $attributes = [], $hasResource = true)
     {
-        $product = $model::factory()->create($attributes);
+        $resourceModel = $model::factory()->create($attributes);
 
-        return new ProductResource($product);
+        if (!$hasResource)
+            return $resourceModel;
+
+        return new $resource($resourceModel);
     }
 }

@@ -15,13 +15,34 @@ class ProductControllerTest extends TestCase
     /**
      * @test
      */
-    public function can_create_a_collection_of_paginated_products()
+    public function non_authenticated_users_cannot_acces_the_following_endpoints_for_the_api()
     {
-        $product1 = $this->create('App\Models\Product');
-        $product2 = $this->create('App\Models\Product');
-        $product3 = $this->create('App\Models\Product');
+        $index = $this->json('GET', '/api/products');
+        $index->assertStatus(401);
 
-        $response = $this->json('GET', '/api/products');
+        $store = $this->json('POST', '/api/products');
+        $store->assertStatus(401);
+
+        $show = $this->json('GET', '/api/products/-1');
+        $show->assertStatus(401);
+
+        $update = $this->json('PUT', '/api/products/-1');
+        $update->assertStatus(401);
+
+        $delete = $this->json('DELETE', '/api/products/-1');
+        $delete->assertStatus(401);
+    }
+
+    /**
+     * @test
+     */
+    public function can_return_a_collection_of_paginated_products()
+    {
+        $product1 = $this->create('App\Models\Product', 'App\Http\Resources\Product');
+        $product2 = $this->create('App\Models\Product', 'App\Http\Resources\Product');
+        $product3 = $this->create('App\Models\Product', 'App\Http\Resources\Product');
+
+        $response = $this->actingAs($this->create('App\Models\User', 'App\Http\Resources\User', [], false), 'api')->json('GET', '/api/products');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -46,7 +67,7 @@ class ProductControllerTest extends TestCase
     {
         $faker = Factory::create();
 
-        $response = $this->json('POST', '/api/products', [
+        $response = $this->actingAs($this->create('App\Models\User', 'App\Http\Resources\User', [], false), 'api')->json('POST', '/api/products', [
             'name' => $name = $faker->company,
             'slug' => Str::slug($name),
             'price' => $price = rand(10, 100)
@@ -76,7 +97,7 @@ class ProductControllerTest extends TestCase
      */
     public function will_fail_with_404_if_product_is_not_found()
     {
-        $response = $this->json('GET', 'api/products/-1');
+        $response = $this->actingAs($this->create('App\Models\User', 'App\Http\Resources\User', [], false), 'api')->json('GET', 'api/products/-1');
 
         $response->assertStatus(404);
     }
@@ -87,10 +108,10 @@ class ProductControllerTest extends TestCase
     public function can_return_a_product()
     {
         // Given
-        $product = $this->create('App\Models\Product');
+        $product = $this->create('App\Models\Product', 'App\Http\Resources\Product');
 
         // When
-        $response = $this->json('GET', "api/products/$product->id");
+        $response = $this->actingAs($this->create('App\Models\User', 'App\Http\Resources\User', [], false), 'api')->json('GET', "api/products/$product->id");
 
         // Then
         $response->assertStatus(200)
@@ -108,7 +129,7 @@ class ProductControllerTest extends TestCase
      */
     public function will_fail_with_404_if_product_we_want_to_update_doesnt_exist()
     {
-        $response = $this->json('PUT', 'api/products/-1');
+        $response = $this->actingAs($this->create('App\Models\User', 'App\Http\Resources\User', [], false), 'api')->json('PUT', 'api/products/-1');
 
         $response->assertStatus(404);
     }
@@ -118,9 +139,9 @@ class ProductControllerTest extends TestCase
      */
     public function can_update_a_product()
     {
-        $product = $this->create('App\Models\Product');
+        $product = $this->create('App\Models\Product', 'App\Http\Resources\Product');
 
-        $response = $this->json('PUT', "api/products/$product->id", [
+        $response = $this->actingAs($this->create('App\Models\User', 'App\Http\Resources\User', [], false), 'api')->json('PUT', "api/products/$product->id", [
             'name' => $product->name.'_updated',
             'slug' => Str::slug($product->name).'_updated',
             'price' => $product->price + 10
@@ -150,7 +171,7 @@ class ProductControllerTest extends TestCase
      */
     public function will_fail_with_404_if_product_to_be_deleted_doesnt_exist()
     {
-        $response = $this->json('DELETE', 'api/products/-1');
+        $response = $this->actingAs($this->create('App\Models\User', 'App\Http\Resources\User', [], false), 'api')->json('DELETE', 'api/products/-1');
 
         $response->assertStatus(404);
     }
@@ -160,9 +181,9 @@ class ProductControllerTest extends TestCase
      */
     public function can_delete_a_product()
     {
-        $product = $this->create('App\Models\Product');
+        $product = $this->create('App\Models\Product', 'App\Http\Resources\Product');
 
-        $response = $this->json('DELETE', "api/products/$product->id");
+        $response = $this->actingAs($this->create('App\Models\User', 'App\Http\Resources\User', [], false), 'api')->json('DELETE', "api/products/$product->id");
 
         $response->assertStatus(204)
             ->assertSee(null);
