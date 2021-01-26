@@ -43,6 +43,6 @@ class ProductController extends Controller
 
         $product->delete();
 
-        return response()->json(new ProductResource($product));
+        return response()->json(null, 204);
     }
 }

@@ -137,14 +137,8 @@ class ProductControllerTest extends TestCase
 
         $response = $this->json('DELETE', "api/products/$product->id");
 
-        $response->assertStatus(200)
-            ->assertExactJson([
-                'id' => $product->id,
-                'name' => $product->name,
-                'slug' => $product->slug,
-                'price' => $product->price,
-                'created_at' => (string)$product->created_at
-            ]);
+        $response->assertStatus(204)
+            ->assertSee(null);
 
         $this->assertDatabaseMissing('products', [
            'id' => $product->id
