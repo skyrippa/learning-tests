@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Http\Controllers\Api;
 
+use App\Http\Resources\Product;
 use Faker\Factory;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -73,5 +74,80 @@ class ProductControllerTest extends TestCase
                 'price' => $product->price,
                 'created_at' => (string)$product->created_at
             ]);
+    }
+
+    /**
+     * @test
+     */
+    public function will_fail_with_404_if_product_we_want_to_update_doesnt_exist()
+    {
+        $response = $this->json('PUT', 'api/products/-1');
+
+        $response->assertStatus(404);
+    }
+
+    /**
+     * @test
+     */
+    public function can_update_a_product()
+    {
+        $product = $this->create('App\Models\Product');
+
+        $response = $this->json('PUT', "api/products/$product->id", [
+            'name' => $product->name.'_updated',
+            'slug' => Str::slug($product->name).'_updated',
+            'price' => $product->price + 10
+        ]);
+
+        $response->assertStatus(200)
+            ->assertExactJson([
+                'id' => $product->id,
+                'name' => $product->name.'_updated',
+                'slug' => Str::slug($product->name).'_updated',
+                'price' => $product->price + 10,
+                'created_at' => (string)$product->created_at
+            ]);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'name' => $product->name.'_updated',
+            'slug' => Str::slug($product->name).'_updated',
+            'price' => $product->price + 10,
+            'created_at' => (string)$product->created_at,
+            'updated_at' => (string)$product->updated_at
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function will_fail_with_404_if_product_to_be_deleted_doesnt_exist()
+    {
+        $response = $this->json('DELETE', 'api/products/-1');
+
+        $response->assertStatus(404);
+    }
+
+    /**
+     * @test
+     */
+    public function can_delete_a_product()
+    {
+        $product = $this->create('App\Models\Product');
+
+        $response = $this->json('DELETE', "api/products/$product->id");
+
+        $response->assertStatus(200)
+            ->assertExactJson([
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'price' => $product->price,
+                'created_at' => (string)$product->created_at
+            ]);
+
+        $this->assertDatabaseMissing('products', [
+           'id' => $product->id
+        ]);
     }
 }
